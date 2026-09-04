@@ -1,5 +1,11 @@
 import { useState } from 'react';
-import { Plus, Trash2, Edit3, Users, Monitor, Bookmark, BookmarkCheck } from 'lucide-react';
+
+const PlusIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>;
+const TrashIcon = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>;
+const EditIcon = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>;
+const UsersIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-3-3.87"/><path d="M9 21v-2a4 4 0 0 1 3-3.87"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><circle cx="19" cy="11" r="2"/></svg>;
+const MonitorIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>;
+const BookmarkIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>;
 
 export default function RoomsTab({ data, onRefresh }) {
   const [showModal, setShowModal] = useState(false);
@@ -69,7 +75,7 @@ export default function RoomsTab({ data, onRefresh }) {
           onClick={() => handleOpenModal()}
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
         >
-          <Plus size={16} /> Add Room
+          <PlusIcon /> Add Room
         </button>
       </div>
 
@@ -86,22 +92,22 @@ export default function RoomsTab({ data, onRefresh }) {
                   <h3 className="font-bold text-lg text-gray-900">Room {room.room_number}</h3>
                   <div className="flex gap-1">
                     <button onClick={() => handleOpenModal(room)} className="p-1 hover:bg-gray-100 rounded text-gray-600">
-                      <Edit3 size={15} />
+                      <EditIcon />
                     </button>
                     <button onClick={() => handleDelete(room.id)} className="p-1 hover:bg-red-50 rounded text-red-600">
-                      <Trash2 size={15} />
+                      <TrashIcon />
                     </button>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
-                  <Users size={16} className="text-blue-500" />
+                  <span className="text-blue-500"><UsersIcon /></span>
                   <span>Capacity: <strong className="text-gray-800">{room.capacity} seats</strong></span>
                 </div>
 
                 <div className="mb-4">
                   <div className="flex items-center gap-1 text-xs font-semibold uppercase text-gray-400 mb-1.5">
-                    <Monitor size={13} /> Equipment
+                    <MonitorIcon /> Equipment
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {equipmentList.length > 0 ? (
@@ -132,15 +138,8 @@ export default function RoomsTab({ data, onRefresh }) {
                       : 'border-blue-600 text-blue-600 hover:bg-blue-50'
                   }`}
                 >
-                  {room.is_booked ? (
-                    <>
-                      <BookmarkCheck size={14} /> Cancel
-                    </>
-                  ) : (
-                    <>
-                      <Bookmark size={14} /> Book Room
-                    </>
-                  )}
+                  <BookmarkIcon />
+                  {room.is_booked ? 'Cancel Booking' : 'Book Room'}
                 </button>
               </div>
             </div>

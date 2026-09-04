@@ -1,5 +1,11 @@
 import { useState } from 'react';
-import { Plus, Trash2, Edit3, MapPin, User, Clock, Calendar } from 'lucide-react';
+
+const PlusIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>;
+const TrashIcon = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>;
+const EditIcon = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>;
+const MapPinIcon = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>;
+const UserIcon = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
+const ClockIcon = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>;
 
 export default function ScheduleTab({ data, onRefresh }) {
   const [showModal, setShowModal] = useState(false);
@@ -51,7 +57,7 @@ export default function ScheduleTab({ data, onRefresh }) {
           onClick={() => handleOpenModal()}
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
         >
-          <Plus size={16} /> Add Class
+          <PlusIcon /> Add Class
         </button>
       </div>
 
@@ -64,10 +70,10 @@ export default function ScheduleTab({ data, onRefresh }) {
               </span>
               <div className="flex gap-1 opacity-90 group-hover:opacity-100 transition">
                 <button onClick={() => handleOpenModal(item)} className="p-1 hover:bg-gray-100 rounded text-gray-600">
-                  <Edit3 size={15} />
+                  <EditIcon />
                 </button>
                 <button onClick={() => handleDelete(item.id)} className="p-1 hover:bg-red-50 rounded text-red-600">
-                  <Trash2 size={15} />
+                  <TrashIcon />
                 </button>
               </div>
             </div>
@@ -76,15 +82,15 @@ export default function ScheduleTab({ data, onRefresh }) {
 
             <div className="space-y-1.5 text-sm text-gray-600">
               <div className="flex items-center gap-2">
-                <Clock size={15} className="text-gray-400" />
+                <span className="text-gray-400"><ClockIcon /></span>
                 <span>{item.time}</span>
               </div>
               <div className="flex items-center gap-2">
-                <MapPin size={15} className="text-gray-400" />
+                <span className="text-gray-400"><MapPinIcon /></span>
                 <span>Room {item.room}</span>
               </div>
               <div className="flex items-center gap-2">
-                <User size={15} className="text-gray-400" />
+                <span className="text-gray-400"><UserIcon /></span>
                 <span>{item.instructor}</span>
               </div>
             </div>
@@ -114,7 +120,7 @@ export default function ScheduleTab({ data, onRefresh }) {
                   <select
                     value={formData.day}
                     onChange={(e) => setFormData({ ...formData, day: e.target.value })}
-                    className="w-full border rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full border rounded-lg p-2.5 text-sm outline-none"
                   >
                     {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((d) => (
                       <option key={d} value={d}>{d}</option>
