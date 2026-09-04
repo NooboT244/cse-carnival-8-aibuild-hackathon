@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Routes, Route, NavLink, Navigate } from 'react-router-dom';
 import './App.css';
 
 import ScheduleTab from './tabs/ScheduleTab';
@@ -16,7 +17,6 @@ const CheckSquareIcon = () => <svg width="20" height="20" viewBox="0 0 24 24" fi
 const SparklesIcon = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3z"/></svg>;
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('schedules');
   const [data, setData] = useState({
     schedules: [],
     rooms: [],
@@ -54,13 +54,13 @@ export default function App() {
     fetchData();
   }, [fetchData]);
 
-  const tabs = [
-    { id: 'schedules', label: 'Schedules', icon: <CalendarIcon /> },
-    { id: 'rooms', label: 'Rooms & Labs', icon: <DoorIcon /> },
-    { id: 'events', label: 'Events', icon: <TicketIcon /> },
-    { id: 'announcements', label: 'Notice Board', icon: <BellIcon /> },
-    { id: 'assignments', label: 'Assignments', icon: <CheckSquareIcon /> },
-    { id: 'ai', label: 'CampusOS AI', icon: <SparklesIcon /> },
+  const navItems = [
+    { path: '/schedules', label: 'Schedules', icon: <CalendarIcon /> },
+    { path: '/rooms', label: 'Rooms & Labs', icon: <DoorIcon /> },
+    { path: '/events', label: 'Events', icon: <TicketIcon /> },
+    { path: '/announcements', label: 'Notice Board', icon: <BellIcon /> },
+    { path: '/assignments', label: 'Assignments', icon: <CheckSquareIcon /> },
+    { path: '/ai', label: 'CampusOS AI', icon: <SparklesIcon /> },
   ];
 
   return (
@@ -75,31 +75,34 @@ export default function App() {
         </div>
 
         <nav className="tab-nav">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
+          {navItems.map((item) => (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              className={({ isActive }) => `tab-btn ${isActive ? 'active' : ''}`}
             >
-              {tab.icon}
-              {tab.label}
-            </button>
+              {item.icon}
+              {item.label}
+            </NavLink>
           ))}
         </nav>
       </header>
 
       <main className="main-content">
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>Loading CampusOS Dataset...</div>
+          <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
+            Loading CampusOS Dataset...
+          </div>
         ) : (
-          <>
-            {activeTab === 'schedules' && <ScheduleTab data={data.schedules} onRefresh={fetchData} />}
-            {activeTab === 'rooms' && <RoomsTab data={data.rooms} onRefresh={fetchData} />}
-            {activeTab === 'events' && <EventsTab data={data.events} onRefresh={fetchData} />}
-            {activeTab === 'announcements' && <AnnouncementsTab data={data.announcements} onRefresh={fetchData} />}
-            {activeTab === 'assignments' && <AssignmentsTab data={data.assignments} onRefresh={fetchData} />}
-            {activeTab === 'ai' && <AIAgentTab context={data} />}
-          </>
+          <Routes>
+            <Route path="/" element={<Navigate to="/schedules" replace />} />
+            <Route path="/schedules" element={<ScheduleTab data={data.schedules} onRefresh={fetchData} />} />
+            <Route path="/rooms" element={<RoomsTab data={data.rooms} onRefresh={fetchData} />} />
+            <Route path="/events" element={<EventsTab data={data.events} onRefresh={fetchData} />} />
+            <Route path="/announcements" element={<AnnouncementsTab data={data.announcements} onRefresh={fetchData} />} />
+            <Route path="/assignments" element={<AssignmentsTab data={data.assignments} onRefresh={fetchData} />} />
+            <Route path="/ai" element={<AIAgentTab context={data} />} />
+          </Routes>
         )}
       </main>
     </div>
