@@ -21,7 +21,6 @@ const announcementSchema = new mongoose.Schema({
     priority: {
         type: String,
         required: true,
-        enum: ["low", "medium", "high"]
     },
     posted_by: {
         type: String,
