@@ -1,49 +1,119 @@
 import { useState } from 'react';
 
-const PlusIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>;
-const TrashIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>;
-const EditIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>;
-const MapPinIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>;
-const UserIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
-const ClockIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>;
+const formatTime = (timeStr) => {
+  if (!timeStr) return '';
+  const [hours, minutes] = timeStr.split(':');
+  let h = parseInt(hours, 10);
+  if (isNaN(h)) return timeStr;
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return `${h}:${minutes.padStart(2, '0')} ${ampm}`;
+};
+
+const initialFormState = {
+  id: '',
+  course: '',
+  title: '',
+  day: 'Sunday',
+  start_time: '',
+  end_time: '',
+  room: '',
+  instructor: '',
+  section: '',
+};
 
 export default function ScheduleTab({ data = [], onRefresh }) {
-  const [showModal, setShowModal] = useState(false);
-  const [editItem, setEditItem] = useState(null);
-  const [formData, setFormData] = useState({ course: '', day: 'Monday', time: '', room: '', instructor: '' });
+  const [selectedDay, setSelectedDay] = useState('All');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
+  const [formData, setFormData] = useState(initialFormState);
 
-  const handleOpenModal = (item = null) => {
-    if (item) {
-      setEditItem(item);
-      setFormData(item);
-    } else {
-      setEditItem(null);
-      setFormData({ course: '', day: 'Monday', time: '', room: '', instructor: '' });
-    }
-    setShowModal(true);
+  const days = ['All', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  const filteredData = selectedDay === 'All'
+    ? data
+    : data.filter((item) => item.day?.toLowerCase() === selectedDay.toLowerCase());
+
+  const handleOpenAdd = () => {
+    setEditingItem(null);
+    setFormData({ ...initialFormState, id: `sch-${Date.now().toString().slice(-6)}` });
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEdit = (item) => {
+    setEditingItem(item);
+    setFormData({
+      id: item.id || '',
+      course: item.course || '',
+      title: item.title || '',
+      day: item.day || 'Sunday',
+      start_time: item.start_time || '',
+      end_time: item.end_time || '',
+      room: item.room || '',
+      instructor: item.instructor || '',
+      section: item.section || '',
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const url = editItem 
-      ? `http://localhost:5000/api/schedules/${editItem.id}` 
+    
+    // Ensure custom string id is used
+    const targetId = editingItem ? editingItem.id : formData.id;
+    const url = editingItem
+      ? `http://localhost:5000/api/schedules/${targetId}`
       : 'http://localhost:5000/api/schedules';
-    const method = editItem ? 'PUT' : 'POST';
+    const method = editingItem ? 'PATCH' : 'POST';
 
-    await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData),
-    });
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
 
-    setShowModal(false);
-    onRefresh();
+      if (res.ok) {
+        setIsModalOpen(false);
+        if (onRefresh) onRefresh();
+      } else {
+        const err = await res.json();
+        alert(`Error: ${err.message || 'Action failed'}`);
+      }
+    } catch (error) {
+      console.error('Submit error:', error);
+      alert('Failed to connect to backend server.');
+    }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this schedule?')) return;
-    await fetch(`http://localhost:5000/api/schedules/${id}`, { method: 'DELETE' });
-    onRefresh();
+  const handleDelete = async (item) => {
+    if (!item.id) {
+      alert('Error: Item does not have a custom id field.');
+      return;
+    }
+
+    if (!window.confirm(`Are you sure you want to delete ${item.course}?`)) return;
+
+    try {
+      const res = await fetch(`http://localhost:5000/api/schedules/${item.id}`, {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        if (onRefresh) onRefresh();
+      } else {
+        const err = await res.json();
+        alert(`Error: ${err.message || 'Failed to delete'}`);
+      }
+    } catch (error) {
+      console.error('Delete error:', error);
+      alert('Failed to connect to backend server.');
+    }
   };
 
   return (
@@ -51,94 +121,199 @@ export default function ScheduleTab({ data = [], onRefresh }) {
       <div className="operations-bar">
         <div className="operations-title">
           <h2>Class Schedules</h2>
-          <p>Manage daily timetables and room assignments</p>
+          <p>View, add, edit, or delete lecture routines</p>
         </div>
-        <button onClick={() => handleOpenModal()} className="btn-primary">
-          <PlusIcon /> Add Class
+        <button className="btn-primary" onClick={handleOpenAdd}>
+          + Add Schedule
         </button>
       </div>
 
-      <div className="card-grid">
-        {data.map((item) => (
-          <div key={item.id} className="card">
-            <div>
-              <div className="card-top">
-                <span className="badge badge-blue">{item.day}</span>
-                <div>
-                  <button onClick={() => handleOpenModal(item)} className="btn-icon"><EditIcon /></button>
-                  <button onClick={() => handleDelete(item.id)} className="btn-icon danger"><TrashIcon /></button>
-                </div>
-              </div>
-              <h3 className="card-title">{item.course}</h3>
-              <div className="card-info">
-                <div className="card-info-item"><ClockIcon /> <span>{item.time}</span></div>
-                <div className="card-info-item"><MapPinIcon /> <span>Room {item.room}</span></div>
-                <div className="card-info-item"><UserIcon /> <span>{item.instructor}</span></div>
-              </div>
-            </div>
-          </div>
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '24px' }}>
+        {days.map((day) => (
+          <button
+            key={day}
+            onClick={() => setSelectedDay(day)}
+            style={{
+              padding: '8px 16px',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-light)',
+              background: selectedDay === day ? 'var(--primary)' : 'var(--bg-card)',
+              color: selectedDay === day ? '#fff' : 'var(--text-main)',
+              fontWeight: '600',
+              cursor: 'pointer',
+            }}
+          >
+            {day}
+          </button>
         ))}
       </div>
 
-      {showModal && (
-        <div className="modal-overlay">
-          <div className="modal-card">
-            <h3>{editItem ? 'Edit Class' : 'Add New Class'}</h3>
-            <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label>Course Name</label>
+      {filteredData.length === 0 ? (
+        <div className="card" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+          No schedules found for {selectedDay}.
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
+          {filteredData.map((item) => {
+            const timeDisplay = item.start_time && item.end_time
+              ? `${formatTime(item.start_time)} - ${formatTime(item.end_time)}`
+              : item.time || 'Time Not Specified';
+
+            return (
+              <div key={item.id || item._id} className="card" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <span
+                    style={{
+                      background: 'rgba(37, 99, 235, 0.1)',
+                      color: 'var(--primary)',
+                      fontWeight: '700',
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      fontSize: '0.85rem',
+                    }}
+                  >
+                    {item.course} {item.section ? `(Sec ${item.section})` : ''}
+                  </span>
+                  <span style={{ fontSize: '0.9rem', fontWeight: '600', color: 'var(--text-muted)' }}>
+                    Room {item.room}
+                  </span>
+                </div>
+
+                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '700' }}>
+                  {item.title || item.course}
+                </h3>
+
+                <div style={{ marginTop: 'auto', paddingTop: '12px', borderTop: '1px solid var(--border-light)', fontSize: '0.95rem', color: 'var(--text-muted)' }}>
+                  <div><strong>Instructor:</strong> {item.instructor || 'N/A'}</div>
+                  <div style={{ marginTop: '4px', display: 'flex', justifyContent: 'space-between', color: 'var(--text-main)', fontWeight: '600' }}>
+                    <span>🗓️ {item.day}</span>
+                    <span>⏰ {timeDisplay}</span>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '8px', marginTop: '8px', paddingTop: '8px', borderTop: '1px dashed var(--border-light)' }}>
+                  <button
+                    onClick={() => handleOpenEdit(item)}
+                    style={{ flex: 1, padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)', background: '#fff', cursor: 'pointer', fontWeight: '600' }}
+                  >
+                    ✏️ Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(item)}
+                    style={{ flex: 1, padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid #fee2e2', background: '#fef2f2', color: '#dc2626', cursor: 'pointer', fontWeight: '600' }}
+                  >
+                    🗑️ Delete
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {isModalOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0, 0, 0, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div className="card" style={{ width: '100%', maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto' }}>
+            <h3>{editingItem ? 'Edit Schedule' : 'Add New Schedule'}</h3>
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
+              <div style={{ display: 'flex', gap: '12px' }}>
                 <input
-                  type="text" required
+                  type="text"
+                  name="course"
+                  placeholder="Course Code (e.g. CSE 4113)"
                   value={formData.course}
-                  onChange={(e) => setFormData({ ...formData, course: e.target.value })}
-                  placeholder="e.g. CSE321 - Operating Systems"
+                  onChange={handleChange}
+                  required
+                  style={{ flex: 1, padding: '10px', borderRadius: '6px', border: '1px solid var(--border-light)' }}
+                />
+                <input
+                  type="text"
+                  name="section"
+                  placeholder="Section (e.g. B)"
+                  value={formData.section}
+                  onChange={handleChange}
+                  style={{ width: '100px', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-light)' }}
                 />
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Day</label>
-                  <select value={formData.day} onChange={(e) => setFormData({ ...formData, day: e.target.value })}>
-                    {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((d) => (
-                      <option key={d} value={d}>{d}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Time Slot</label>
+              <input
+                type="text"
+                name="title"
+                placeholder="Course Title"
+                value={formData.title}
+                onChange={handleChange}
+                required
+                style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--border-light)' }}
+              />
+
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <select
+                  name="day"
+                  value={formData.day}
+                  onChange={handleChange}
+                  style={{ flex: 1, padding: '10px', borderRadius: '6px', border: '1px solid var(--border-light)' }}
+                >
+                  {days.filter(d => d !== 'All').map(d => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
+
+                <input
+                  type="text"
+                  name="room"
+                  placeholder="Room (e.g. 7A07)"
+                  value={formData.room}
+                  onChange={handleChange}
+                  required
+                  style={{ flex: 1, padding: '10px', borderRadius: '6px', border: '1px solid var(--border-light)' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Start Time</label>
                   <input
-                    type="text" required
-                    value={formData.time}
-                    onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                    placeholder="e.g. 09:00 AM - 10:30 AM"
+                    type="time"
+                    name="start_time"
+                    value={formData.start_time}
+                    onChange={handleChange}
+                    required
+                    style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-light)' }}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>End Time</label>
+                  <input
+                    type="time"
+                    name="end_time"
+                    value={formData.end_time}
+                    onChange={handleChange}
+                    required
+                    style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-light)' }}
                   />
                 </div>
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Room</label>
-                  <input
-                    type="text" required
-                    value={formData.room}
-                    onChange={(e) => setFormData({ ...formData, room: e.target.value })}
-                    placeholder="e.g. 304"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Instructor</label>
-                  <input
-                    type="text" required
-                    value={formData.instructor}
-                    onChange={(e) => setFormData({ ...formData, instructor: e.target.value })}
-                    placeholder="e.g. Dr. Rahman"
-                  />
-                </div>
-              </div>
+              <input
+                type="text"
+                name="instructor"
+                placeholder="Instructor Name"
+                value={formData.instructor}
+                onChange={handleChange}
+                style={{ padding: '10px', borderRadius: '6px', border: '1px solid var(--border-light)' }}
+              />
 
-              <div className="modal-actions">
-                <button type="button" onClick={() => setShowModal(false)} className="btn-secondary">Cancel</button>
-                <button type="submit" className="btn-primary">Save Class</button>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '16px' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  style={{ padding: '10px 18px', border: 'none', background: 'transparent', cursor: 'pointer' }}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn-primary">
+                  {editingItem ? 'Save Changes' : 'Create Schedule'}
+                </button>
               </div>
             </form>
           </div>

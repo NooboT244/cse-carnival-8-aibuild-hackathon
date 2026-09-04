@@ -7,6 +7,7 @@ import roomRoutes from "./routes/roomRoutes.js";
 import eventRoutes from "./routes/eventRoutes.js";
 import assignmentRoutes from "./routes/assignmentRoutes.js";
 import announcementRoutes from "./routes/announcementRoutes.js";
+import aiRoutes from "./routes/aiRoutes.js";
 
 dotenv.config()
 const app = express()
@@ -19,6 +20,7 @@ app.use("/api/rooms", roomRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/assignments", assignmentRoutes);
 app.use("/api/announcements", announcementRoutes);
+app.use("/api/ai", aiRoutes);
 
 mongoose.connect(process.env.MONGO_URI)
     .then(() => {
@@ -34,7 +36,7 @@ app.get('/', (req, res) => {
     })
 })
 
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
