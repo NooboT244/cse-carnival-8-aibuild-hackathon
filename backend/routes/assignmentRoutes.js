@@ -73,4 +73,28 @@ router.patch("/:id", async (req, res) => {
     }
 });
 
+router.delete("/:id", async (req, res) => {
+    try {
+        const assignment = await Assignment.findOneAndDelete({
+            id: req.params.id
+        });
+
+        if (!assignment) {
+            return res.status(404).json({
+                message: "Assignment not found"
+            });
+        }
+
+        res.status(200).json({
+            message: "Assignment deleted successfully",
+            assignment
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: "Failed to delete assignment",
+            error: error.message
+        });
+    }
+});
+
 export default router;

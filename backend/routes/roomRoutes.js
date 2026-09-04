@@ -74,4 +74,28 @@ router.patch("/:id", async (req, res) => {
     }
 });
 
+router.delete("/:id", async (req, res) => {
+    try {
+        const room = await Room.findOneAndDelete({
+            id: req.params.id
+        });
+
+        if (!room) {
+            return res.status(404).json({
+                message: "Room not found"
+            });
+        }
+
+        res.status(200).json({
+            message: "Room deleted successfully",
+            room
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: "Failed to delete room",
+            error: error.message
+        });
+    }
+});
+
 export default router;

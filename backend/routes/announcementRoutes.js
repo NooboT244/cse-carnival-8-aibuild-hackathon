@@ -77,4 +77,28 @@ router.patch("/:id", async (req, res) => {
     }
 });
 
+router.delete("/:id", async (req, res) => {
+    try {
+        const announcement = await Announcement.findOneAndDelete({
+            id: req.params.id
+        });
+
+        if (!announcement) {
+            return res.status(404).json({
+                message: "Announcement not found"
+            });
+        }
+
+        res.status(200).json({
+            message: "Announcement deleted successfully",
+            announcement
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: "Failed to delete announcement",
+            error: error.message
+        });
+    }
+});
+
 export default router;

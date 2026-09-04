@@ -77,4 +77,28 @@ router.patch("/:id", async (req, res) => {
     }
 });
 
+router.delete("/:id", async (req, res) => {
+    try {
+        const schedule = await Schedule.findOneAndDelete({
+            id: req.params.id
+        });
+
+        if (!schedule) {
+            return res.status(404).json({
+                message: "Schedule not found"
+            });
+        }
+
+        res.status(200).json({
+            message: "Schedule deleted successfully",
+            schedule
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: "Failed to delete schedule",
+            error: error.message
+        });
+    }
+});
+
 export default router;
